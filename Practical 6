@@ -222,3 +222,33 @@ for (var i = 0; i < bandNames.length().getInfo(); i++) {
 }
 
 Map.addLayer(pcImage, {bands: ['pc2', 'pc1'], min: -2, max: 2}, 'PCA bands 1 and 2');
+
+// 5.11 Exporting
+// select the bands you want
+var PCA_out = pcImage.select(['pc1', 'pc2'])
+
+var projection = PCA_out.select('pc1').projection().getInfo();
+print(projection, "output_projection")
+
+var bounds = Delhi.geometry();
+
+// Export the image, specifying the CRS, transform, and region.
+Export.image.toDrive({
+  image: PCA_out,
+  description: 'PCA_Delhi',
+  scale:30,
+  crs: projection.crs,
+  maxPixels: 100E10,
+  region: bounds
+
+});
+
+// 5.12 Band Maths
+
+//NDVI
+var NDVI_1 = clip.select('SR_B5').subtract(clip.select('SR_B4'))
+  .divide(clip.select('SR_B5').add(clip.select('SR_B4')));
+
+Map.addLayer(NDVI_1, { min: -1, max: 1, palette: ['blue', 'white', 'green']}, 'NDVI');
+
+var NDVI_2 = clip.normalizedDifference(['SR_B5', 'SR_B4']);

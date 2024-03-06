@@ -1,0 +1,249 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var urban = 
+    /* color: #ff0000 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[39.27287451040074, -6.817157856421281],
+          [39.27287451040074, -6.820992915046561],
+          [39.278281843774764, -6.820992915046561],
+          [39.278281843774764, -6.817157856421281]]], null, false),
+    grass = 
+    /* color: #00ff00 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[39.288128263344134, -6.805834151097033],
+          [39.288128263344134, -6.808220469747717],
+          [39.29018819986757, -6.808220469747717],
+          [39.29018819986757, -6.805834151097033]]], null, false),
+    bare_earth = 
+    /* color: #0000ff */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[39.34160117463417, -6.926233716268717],
+          [39.34160117463417, -6.9277673914626074],
+          [39.34288863496132, -6.9277673914626074],
+          [39.34288863496132, -6.926233716268717]]], null, false),
+    forest = 
+    /* color: #999900 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[39.07665878235606, -6.701285568347394],
+          [39.07665878235606, -6.716117850094499],
+          [39.08816009461192, -6.716117850094499],
+          [39.08816009461192, -6.701285568347394]]], null, false);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//7.2 Data
+//7.2.1 Vector data
+//--------------------------Vector data---------------------------
+
+var dataset = ee.FeatureCollection("FAO/GAUL/2015/level2");
+
+var dataset_style = dataset.style({
+  color: '1e90ff',
+  width: 2,
+  fillColor: '00000000',  // with alpha set for partial transparency
+//  lineType: 'dotted',
+//  pointSize: 10,
+//  pointShape: 'circle'
+});
+
+Map.addLayer(dataset_style, null, 'Second Level Administrative Units');
+
+Map.addLayer(dataset, {}, 'Second Level Administrative Units_2');
+
+var Daressalaam = dataset.filter('ADM1_NAME == "Dar-es-salaam"');
+
+Map.addLayer(Daressalaam, {}, 'Dar-es-salaam');
+
+//7.2.2 EO data
+//set the scale function/load the imagery/map the output
+//--------------------------Landsat data---------------------------
+
+function applyScaleFactors(image) {
+  var opticalBands = image.select('SR_B.').multiply(0.0000275).add(-0.2);
+  var thermalBands = image.select('ST_B.*').multiply(0.00341802).add(149.0);
+  return image.addBands(opticalBands, null, true)
+              .addBands(thermalBands, null, true);
+}
+
+var cloudMaskC2L7 = function(image) {
+  var dilatedCloud = (1 << 1)
+  var cloud = (1 << 3)
+  var cloudShadow = (1 << 4)
+  var qa = image.select('QA_PIXEL');
+  var mask = qa.bitwiseAnd(dilatedCloud)
+    .and(qa.bitwiseAnd(cloud))
+    .or(qa.bitwiseAnd(cloudShadow))
+  return image.updateMask(mask.not());
+}
+
+var oneimage_study_area_cloud = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+  .filterDate('2022-01-01', '2022-10-10')
+  .filterBounds(Daressalaam)  // Intersecting ROI
+  .filter(ee.Filter.lt("CLOUD_COVER", 1))
+  //.map(cloudMaskC2L7)
+  .map(applyScaleFactors)
+  .reduce(ee.Reducer.median())
+  .select(['SR_B1_median', 'SR_B2_median', 'SR_B3_median', 'SR_B4_median', 'SR_B5_median', 'SR_B6_median', 'SR_B7_median'])
+  .clip(Daressalaam);
+
+// set up some of the visualisation paramters 
+var vis_params = {
+  bands: ['SR_B4_median', 'SR_B3_median', 'SR_B2_median'],
+  min: 0.0,
+  max: 0.3,
+};
+
+Map.addLayer(oneimage_study_area_cloud, vis_params, 'True Color (432)');
+  
+Map.centerObject(Daressalaam, 10)
+
+//7.3 Classify
+//7.3.1 Sub-pixel
+
+//select some training data of landcover and then take a average that becomes the endmember
+//------------------function-------------------
+
+function data_extract(image, vector) {
+  var data = image.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: vector,
+    scale: 30,
+    maxPixels: 1e8
+  });
+  return data.values(); // here we use return
+}
+
+var urban_data = data_extract(oneimage_study_area_cloud, urban);
+var grass_data = data_extract(oneimage_study_area_cloud, grass);
+var bare_earth_data = data_extract(oneimage_study_area_cloud, bare_earth);
+var forest_data = data_extract(oneimage_study_area_cloud, forest);
+
+//------------------fractions-------------------
+var fractions = oneimage_study_area_cloud.unmix([urban_data, grass_data, bare_earth_data, forest_data]);
+Map.addLayer(fractions, {}, 'unmixed');
+
+var fractions_constrained = oneimage_study_area_cloud.unmix([urban_data, grass_data, bare_earth_data, forest_data], true, true);
+Map.addLayer(fractions_constrained, {}, 'constrained fractions');
+
+//7.3.1.1 Accuracy
+var reclassified_urban = fractions_constrained.expression('b(0) >.5 ? 1 : 0');
+var reclassified_grass = fractions_constrained.expression('b(1) >.5 ? 2 : 0');
+var reclassified_bare_earth = fractions_constrained.expression('b(2) >.5 ? 2 : 0');
+var reclassified_forest = fractions_constrained.expression('b(3) >.5 ? 3 : 0');
+
+var reclassified_all = reclassified_urban.add(reclassified_grass)
+                                .add(reclassified_bare_earth)
+                                .add(reclassified_forest)
+                                // the output is made at a larger extent so clip
+                                .clip(Daressalaam);
+                                
+Map.addLayer(reclassified_all, {min: 1, max: 3, palette: ['d99282', 'dfdfc2', 'b3ac9f', '1c5f2c']}, "reclassified_all");
+
+//7.3.2 Object based
+var gradient = oneimage_study_area_cloud.gradient();
+
+var spectralgradient = oneimage_study_area_cloud.spectralGradient();
+
+Map.addLayer(spectralgradient,{}, "spectral_gradient");
+
+//7.3.4 Super Pixels
+//kmeans
+var kmeans = ee.Algorithms.Image.Segmentation.KMeans({
+  image: oneimage_study_area_cloud,
+  numClusters: 1000,
+  numIterations: 100,
+ // neighborhoodSize: 2,
+  //gridSize: 2,
+  forceConvergence: false,
+  uniqueLabels: true
+})
+
+Map.addLayer(kmeans, {}, 'kmeans')
+
+//seed grid
+var seeds = ee.Algorithms.Image.Segmentation.seedGrid(40, "hex");
+
+Map.addLayer(seeds, {}, 'seeds')
+
+//SNIC
+// Run SNIC on the regular square grid.
+var snic = ee.Algorithms.Image.Segmentation.SNIC({
+  image: oneimage_study_area_cloud, 
+  //size: 50,  // don't need it seeds given
+  compactness: 1,
+  connectivity: 8,
+  neighborhoodSize:50,
+  seeds: seeds
+});
+
+Map.addLayer(snic, {}, 'means', true ,0.6)
+
+//------------------Object-Based Image Analysis (OBIA) stats-------------------
+
+var clusters = snic.select('clusters')
+var stdDev = oneimage_study_area_cloud.addBands(clusters).reduceConnectedComponents(ee.Reducer.stdDev(), 'clusters', 100)
+
+Map.addLayer(stdDev, {min:0, max:0.1}, 'StdDev', true)
+
+//NDVI
+var NDVI = snic.normalizedDifference(['SR_B5_median_mean', 'SR_B4_median_mean']);
+Map.addLayer(NDVI, {min:-1, max:1}, 'NDVI', false)
+
+//------------------OBIA merge-------------------
+
+var bands = ['SR_B1_median_mean', 'SR_B2_median_mean', 'SR_B3_median_mean', 'SR_B4_median_mean',
+'SR_B5_median_mean', 'SR_B6_median_mean', 'SR_B7_median_mean']
+
+var objectPropertiesImage = ee.Image.cat([
+  snic.select(bands),
+  stdDev,
+  NDVI
+]).float();
+
+//------------------ Classification -------------------
+
+// Make a FeatureCollection from the polygons
+var points = ee.FeatureCollection([
+  ee.Feature(urban, {'class': 1}),
+  ee.Feature(grass, {'class': 2}),
+  ee.Feature(bare_earth, {'class': 5}),
+  ee.Feature(forest, {'class': 6}),
+]);
+
+// The name of the property on the points storing the class label.
+var classProperty = 'class';
+
+// Sample the composite to generate training data.  Note that the
+// class label is stored in the 'landcover' property.
+var training = objectPropertiesImage.sampleRegions({
+  collection: points,
+  properties: [classProperty],
+  scale: 30
+});
+
+// Train a CART classifier.
+var classifier = ee.Classifier.smileCart().train({
+  features: training,
+  classProperty: classProperty,
+});
+
+var classified = objectPropertiesImage.classify(classifier);
+
+Map.addLayer(classified, {min: 1, max: 5, palette: ['d99282', 'dfdfc2', 'b3ac9f', '1c5f2c']}, "classified");

@@ -1,0 +1,517 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var water = 
+    /* color: #0e74d6 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.MultiPolygon(
+        [[[[114.14376488972, 22.578169540735495],
+           [114.14376488972, 22.574999411060183],
+           [114.1477989320784, 22.574999411060183],
+           [114.1477989320784, 22.578169540735495]]],
+         [[[113.99743067274575, 22.521932486029687],
+           [113.99743067274575, 22.52042606970977],
+           [114.00112139235024, 22.52042606970977],
+           [114.00112139235024, 22.521932486029687]]],
+         [[[113.88100886722053, 22.62369036751241],
+           [113.88100886722053, 22.62067974185502],
+           [113.88465667148078, 22.62067974185502],
+           [113.88465667148078, 22.62369036751241]]],
+         [[[113.90030941183552, 22.700748450080795],
+           [113.90030941183552, 22.696947678308298],
+           [113.90417179281697, 22.696947678308298],
+           [113.90417179281697, 22.700748450080795]]],
+         [[[113.96756202976127, 22.78470417260446],
+           [113.96756202976127, 22.78082659924298],
+           [113.97168190280814, 22.78082659924298],
+           [113.97168190280814, 22.78470417260446]]]], null, false),
+    forest = 
+    /* color: #0d8b2c */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.MultiPolygon(
+        [[[[113.88790995628354, 22.83090646200896],
+           [113.88790995628354, 22.828790354815713],
+           [113.89157921821591, 22.828790354815713],
+           [113.89157921821591, 22.83090646200896]]],
+         [[[113.95757723037785, 22.65282028690641],
+           [113.95757723037785, 22.64695867158722],
+           [113.96925020401066, 22.64695867158722],
+           [113.96925020401066, 22.65282028690641]]],
+         [[[113.99656658196463, 22.58214770127259],
+           [113.99656658196463, 22.575173521070433],
+           [114.00832538628592, 22.575173521070433],
+           [114.00832538628592, 22.58214770127259]]],
+         [[[114.44942878518926, 22.667881805337572],
+           [114.44942878518926, 22.65806057518403],
+           [114.48101447854863, 22.65806057518403],
+           [114.48101447854863, 22.667881805337572]]],
+         [[[114.3203394297205, 22.630177125592237],
+           [114.3203394297205, 22.620353198816996],
+           [114.3419687632166, 22.620353198816996],
+           [114.3419687632166, 22.630177125592237]]],
+         [[[114.45526527200566, 22.627325090141333],
+           [114.45526527200566, 22.61623327868357],
+           [114.47449134622441, 22.61623327868357],
+           [114.47449134622441, 22.627325090141333]]],
+         [[[114.57422660623418, 22.527149484124134],
+           [114.57422660623418, 22.518903947155724],
+           [114.58933280740605, 22.518903947155724],
+           [114.58933280740605, 22.527149484124134]]]], null, false),
+    grass = 
+    /* color: #82ff49 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.MultiPolygon(
+        [[[[114.36409741488757, 22.725351304859753],
+           [114.36409741488757, 22.72317418359442],
+           [114.3682816609508, 22.72317418359442],
+           [114.3682816609508, 22.725351304859753]]],
+         [[[114.2863623174211, 22.687777101392676],
+           [114.2863623174211, 22.68698520766895],
+           [114.28688803038801, 22.68698520766895],
+           [114.28688803038801, 22.687777101392676]]],
+         [[[113.93474717844612, 22.820771363619155],
+           [113.93474717844612, 22.81926822569217],
+           [113.93766542185432, 22.81926822569217],
+           [113.93766542185432, 22.820771363619155]]],
+         [[[114.05493705923239, 22.745895631704826],
+           [114.05493705923239, 22.744154199130723],
+           [114.0561816042153, 22.744154199130723],
+           [114.0561816042153, 22.745895631704826]]],
+         [[[114.20686898492592, 22.685104538587055],
+           [114.20686898492592, 22.684609595895196],
+           [114.2072981383683, 22.684609595895196],
+           [114.2072981383683, 22.685104538587055]]]], null, false),
+    bareearth = 
+    /* color: #ff6918 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.MultiPolygon(
+        [[[[114.28994335620312, 22.696805679478242],
+           [114.28994335620312, 22.696033634025497],
+           [114.29110207049756, 22.696033634025497],
+           [114.29110207049756, 22.696805679478242]]],
+         [[[114.22455574952822, 22.660684700894752],
+           [114.22455574952822, 22.659912452030976],
+           [114.22526385270815, 22.659912452030976],
+           [114.22526385270815, 22.660684700894752]]],
+         [[[114.20672508284167, 22.658885602050244],
+           [114.20672508284167, 22.65831135860224],
+           [114.20760484739856, 22.65831135860224],
+           [114.20760484739856, 22.658885602050244]]],
+         [[[114.09385613522623, 22.62105903826307],
+           [114.09385613522623, 22.62006868919898],
+           [114.09510068020914, 22.62006868919898],
+           [114.09510068020914, 22.62105903826307]]],
+         [[[113.81430615710603, 22.670383311880514],
+           [113.81430615710603, 22.668799318932294],
+           [113.8160656862198, 22.668799318932294],
+           [113.8160656862198, 22.670383311880514]]],
+         [[[113.81344881150473, 22.73005986751926],
+           [113.81344881150473, 22.728773435241994],
+           [113.8146504411434, 22.728773435241994],
+           [113.8146504411434, 22.73005986751926]]]], null, false),
+    urban = 
+    /* color: #c2a494 */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      },
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.MultiPolygon(
+        [[[[113.8444987067722, 22.755956257685686],
+           [113.8444987067722, 22.753304717222598],
+           [113.84737403483616, 22.753304717222598],
+           [113.84737403483616, 22.755956257685686]]],
+         [[[113.79739546600848, 22.74133590022502],
+           [113.79739546600848, 22.737575835792576],
+           [113.80022787872821, 22.737575835792576],
+           [113.80022787872821, 22.74133590022502]]],
+         [[[113.99259853793559, 22.670591142947245],
+           [113.99259853793559, 22.66825475048104],
+           [113.99483013583598, 22.66825475048104],
+           [113.99483013583598, 22.670591142947245]]],
+         [[[114.02077157296551, 22.52853905418535],
+           [114.02077157296551, 22.52675522363442],
+           [114.02296025552167, 22.52675522363442],
+           [114.02296025552167, 22.52853905418535]]],
+         [[[114.0559768608735, 22.525664787072216],
+           [114.0559768608735, 22.52447554452073],
+           [114.05807971274118, 22.52447554452073],
+           [114.05807971274118, 22.525664787072216]]],
+         [[[114.10498737728356, 22.60483977378274],
+           [114.10498737728356, 22.60151178029608],
+           [114.10945057308435, 22.60151178029608],
+           [114.10945057308435, 22.60483977378274]]],
+         [[[114.1099655572152, 22.61474404005744],
+           [114.1099655572152, 22.613000940896782],
+           [114.1136562768197, 22.613000940896782],
+           [114.1136562768197, 22.61474404005744]]],
+         [[[114.19683594802588, 22.650756075691405],
+           [114.19683594802588, 22.647983679574978],
+           [114.19975419143408, 22.647983679574978],
+           [114.19975419143408, 22.650756075691405]]],
+         [[[114.22746621945069, 22.707138524901232],
+           [114.22746621945069, 22.70428808896137],
+           [114.23042737820313, 22.70428808896137],
+           [114.23042737820313, 22.707138524901232]]],
+         [[[114.3747796875953, 22.749930631434133],
+           [114.3747796875953, 22.74723939665864],
+           [114.38010119028084, 22.74723939665864],
+           [114.38010119028084, 22.749930631434133]]]], null, false);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+
+//6.3 Vector Data
+
+//load level 2 Global Administrative Unit Layers
+var dataset = ee.FeatureCollection("FAO/GAUL/2015/level2");
+
+Map.setCenter(12.876, 42.682, 5);
+
+var styleParams = {
+  fillColor: 'b5ffb4',
+  color: '00909F',
+  width: 1.0,
+};
+
+// comment this out otherwise it will just display as RBG data
+//dataset = dataset.style(styleParams);
+
+Map.addLayer(dataset, {}, 'Second Level Administrative Units');
+
+//filter city of interest (e.g. Shenzhen)
+var shenzhen = dataset.filter('ADM2_CODE == 13030');
+
+//6.4 EO Data
+
+//create the function to scale Sentinel 2 image from 10000 to 0 to 1
+var divide10000 = function(image) {
+  return image.divide(10000);
+};
+
+//load image and filter for cloud cover
+var wayone = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                  .filterDate('2022-01-01', '2022-10-31')
+                  .filterBounds(shenzhen)  // Intersecting ROI
+                  // Pre-filter to get less cloudy granules.
+                  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE',1));
+
+var wayone_divide = wayone.map(divide10000);
+
+var visualization = {
+  min: 0.0,
+  max: 0.3,
+  bands: ['B4', 'B3', 'B2'],
+};
+
+Map.centerObject(shenzhen, 10);
+
+Map.addLayer(wayone_divide, visualization, 'wayoneRGB');
+
+Export.table.toDrive(wayone_divide, 'exportAsCSV_wayone', 'GEE', 'CSVexport', 'CSV');
+
+//function to mask the cloudy pixels and do divisions
+function maskS2clouds(image) {
+  var qa = image.select('QA60');
+
+  // Bits 10 and 11 are clouds and cirrus, respectively.
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+
+  // Both flags should be set to zero, indicating clear conditions.
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+      .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+
+  return image.updateMask(mask).divide(10000);
+}
+
+//load and filter collection with cloud mask
+var waytwo = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                  .filterDate('2022-01-01', '2022-10-31')
+                  .filterBounds(shenzhen)  // Intersecting ROI
+                  // Pre-filter to get less cloudy granules.
+                  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE',20))
+                  .map(maskS2clouds);
+                  
+Map.addLayer(waytwo, visualization, 'waytwoRGB');
+
+// Take the median image
+var waytwo_median = waytwo.median();
+
+//6.5  Classification
+
+// Clip the median image to the region of interest
+var waytwo_median_clip = waytwo_median.clip(shenzhen);
+
+// Add the clipped median image to the map
+Map.addLayer(waytwo_median_clip, visualization, 'waytwo_median_clip');
+
+// Make a FeatureCollection from the polygons
+var polygons = ee.FeatureCollection([
+  ee.Feature(water, {'class': 1}),
+  ee.Feature(forest, {'class': 2}),
+  ee.Feature(grass, {'class': 3}),
+  ee.Feature(bareearth, {'class': 4}),
+  ee.Feature(urban, {'class': 5}),
+
+]);
+
+// Use these bands for classification.
+var bands = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7'];
+// The name of the property on the points storing the class label.
+var classProperty = 'class';
+
+// Sample the composite to generate training data.  Note that the
+// class label is stored in the 'landcover' property.
+var training = waytwo_median_clip.select(bands).sampleRegions({
+  collection: polygons,
+  properties: [classProperty],
+  scale: 10
+});
+
+print(training, "training")
+
+//6.6 Classify
+
+// Train a CART classifier.
+var classifier = ee.Classifier.smileCart().train({
+  features: training,
+  classProperty: classProperty,
+});
+// Print some info about the classifier (specific to CART).
+print('CART, explained', classifier.explain());
+
+// Classify the image.
+var classified = waytwo_median_clip.classify(classifier);
+
+// add output
+Map.centerObject(shenzhen);
+Map.addLayer(classified, {min: 1, max: 5, palette: ['d99282', '466b9f', 'ab0000', 'dfdfc2', 'b3ac9f', '1c5f2c']}, "classified");
+
+// colours from: https://gis.stackexchange.com/questions/336043/why-do-original-colors-in-gee-images-appear-in-different-colors
+
+//6.7 Train Test Split
+
+// Optionally, do some accuracy assessment.  Fist, add a column of
+// random uniforms to the training dataset.
+var withRandom = polygons.randomColumn('random');
+
+
+// We want to reserve some of the data for testing, to avoid overfitting the model.
+var split = 0.5;  // Roughly 70% training, 30% testing.
+var trainingPartition = withRandom.filter(ee.Filter.lt('random', split));
+var testingPartition = withRandom.filter(ee.Filter.gte('random', split));
+
+print(trainingPartition, "train")
+print(testingPartition, "test")
+
+
+// take samples from image for training and validation  
+var training = waytwo_median_clip.select(bands).sampleRegions({
+  collection: trainingPartition,
+  properties: ['class'],
+  scale: 10,
+});
+
+
+var validation = waytwo_median_clip.select(bands).sampleRegions({
+  collection: testingPartition,
+  properties: ['class'],
+  scale: 10
+});
+
+// Random Forest Classification
+
+var rf1 = ee.Classifier.smileRandomForest(100)
+    .train(training, 'class');
+    
+
+////classify//////
+    
+var rf2 = waytwo_median_clip.classify(rf1);
+
+// Classify the test FeatureCollection.
+var test = validation.classify(rf1);
+
+var testAccuracy = test.errorMatrix('class', 'classification');
+var consumers=testAccuracy.consumersAccuracy()
+
+print('Validation error matrix: ', testAccuracy);
+print('Validation overall accuracy: ', testAccuracy.accuracy())
+print('Validation consumer accuracy: ', consumers);
+
+Map.addLayer(rf2, {min: 1, max: 5, palette: ['d99282', '466b9f', 'ab0000', 'dfdfc2', 'b3ac9f', '1c5f2c']}, "RF");
+
+//6.8 Train Test Split Pixels
+
+////Pixel approach/////////////
+
+var pixel_number= 1000;
+
+var water_points=ee.FeatureCollection.randomPoints(water, pixel_number).map(function(i){
+  return i.set({'class': 1})})
+  
+var forest_points=ee.FeatureCollection.randomPoints(forest, pixel_number).map(function(i){
+  return i.set({'class': 2})})
+  
+var grass_points=ee.FeatureCollection.randomPoints(grass, pixel_number).map(function(i){
+  return i.set({'class': 3})})
+
+var bareearth_points=ee.FeatureCollection.randomPoints(bareearth, pixel_number).map(function(i){
+  return i.set({'class': 4})})
+
+var urban_points=ee.FeatureCollection.randomPoints(urban, pixel_number).map(function(i){
+  return i.set({'class': 5})})
+
+var point_sample=ee.FeatureCollection([water_points,
+                                  forest_points,
+                                  grass_points,
+                                  bareearth_points,
+                                  urban_points])
+                                  .flatten()
+                                  .randomColumn();
+
+// assign 70% of training points to validation 
+var split=0.7
+var training_sample = point_sample.filter(ee.Filter.lt('random', split));
+var validation_sample = point_sample.filter(ee.Filter.gte('random', split));
+
+// take samples from image for training and validation  
+var training = waytwo_median_clip.select(bands).sampleRegions({
+  collection: training_sample,
+  properties: ['class'],
+  scale: 10,
+});
+
+var validation = waytwo_median_clip.select(bands).sampleRegions({
+  collection: validation_sample,
+  properties: ['class'],
+  scale: 10
+});
+
+// Random Forest Classification
+
+var rf1_pixel = ee.Classifier.smileRandomForest(100)
+    .train(training, 'class');
+
+// Get information about the trained classifier.
+print('Results of RF trained classifier', rf1_pixel.explain());
+
+
+// // --------------------- Step 3: Conduct classification --------------------------------
+    
+var rf2_pixel = waytwo_median_clip.classify(rf1_pixel);
+
+Map.addLayer(rf2_pixel, {min: 1, max: 5, 
+  palette: ['d99282', '466b9f', 'ab0000', 'dfdfc2', 'b3ac9f', '1c5f2c']},
+  "RF_pixel");
+// // --------------------- Step 4: Assess Accuracy --------------------------------
+
+var trainAccuracy = rf1_pixel.confusionMatrix();
+print('Resubstitution error matrix: ', trainAccuracy);
+print('Training overall accuracy: ', trainAccuracy.accuracy());
+
+var validated = validation.classify(rf1_pixel);
+
+var testAccuracy = validated.errorMatrix('class', 'classification');
+var consumers=testAccuracy.consumersAccuracy()
+
+print('Validation error matrix: ', testAccuracy);
+print('Validation overall accuracy: ', testAccuracy.accuracy())
+print('Validation consumer accuracy: ', consumers);

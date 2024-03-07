@@ -1,9 +1,8 @@
 /**** Start of imports. If edited, may not auto-convert in the playground. ****/
 var table2 = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level1");
 /***** End of imports. If edited, may not auto-convert in the playground. *****/
+//1. Study Area
 var dataset = ee.FeatureCollection("FAO/GAUL/2015/level1");
-
-Map.setCenter(12.876, 42.682, 5);
 
 var styleParams = {
   fillColor: 'b5ffb4',
@@ -16,8 +15,30 @@ var styleParams = {
 
 Map.addLayer(dataset, {}, 'First Level Administrative Units');
 
-var filteredData = dataset.filter('ADM1_CODE == 2206 || ADM1_CODE == 2208');
+var Niger = dataset.filter('ADM1_CODE == 2206 || ADM1_CODE == 2208');
 
-Map.addLayer(filteredData, {}, 'Niger');
+Map.addLayer(Niger, {}, 'Niger');
 
-Map.centerObject(Niger, 10)
+Map.centerObject(Niger, 5)
+
+//2. Landsat Data
+var startYear = 2014;
+var endYear = 2023;
+
+//function to map NDVI over image collection
+//https://developers.google.com/earth-engine/tutorials/tutorial_api_06
+var addNDVI = function(image) {
+  var ndvi = image.normalizedDifference(['B5', 'B4']).rename('NDVI');
+  return image.addBands(ndvi);
+};
+
+
+//filter Landsat images for the specified time range and study area
+var landsatCollection = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
+  .filterBounds(Niger)
+  .filterDate(startYear + '-01-01', endYear + '-12-31')
+  .map(addNDVI);
+  
+  
+
+  

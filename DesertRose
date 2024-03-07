@@ -17,3 +17,7 @@ var styleParams = {
 Map.addLayer(dataset, {}, 'First Level Administrative Units');
 
 var filteredData = dataset.filter('ADM1_CODE == 2206 || ADM1_CODE == 2208');
+
+Map.addLayer(filteredData, {}, 'Niger');
+
+Map.centerObject(Niger, 10)

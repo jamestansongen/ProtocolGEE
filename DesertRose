@@ -1,0 +1,19 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var table2 = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level1");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+var dataset = ee.FeatureCollection("FAO/GAUL/2015/level1");
+
+Map.setCenter(12.876, 42.682, 5);
+
+var styleParams = {
+  fillColor: 'b5ffb4',
+  color: '00909F',
+  width: 1.0,
+};
+
+// comment this out otherwise it will just display as RBG data
+//dataset = dataset.style(styleParams);
+
+Map.addLayer(dataset, {}, 'First Level Administrative Units');
+
+var filteredData = dataset.filter('ADM1_CODE == 2206 || ADM1_CODE == 2208');

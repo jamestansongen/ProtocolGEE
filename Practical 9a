@@ -121,3 +121,41 @@ var MODIS_Terra_day = ee.ImageCollection('MODIS/061/MOD11A1')
   .filterBounds(Beijing)  // Intersecting ROI;
   .select('LST_Day_1km')
   .map(MODISscale);
+  
+//merge collection and plot mean temperature
+var mean_aqua_terra = MODIS_Aqua_day.merge(MODIS_Terra_day)
+  .reduce(ee.Reducer.mean())
+  .clip(Beijing)
+
+Map.addLayer(mean_aqua_terra, landSurfaceTemperatureVis,
+    'MODIS Land Surface Temperature');
+    
+//display results
+var landSurfaceTemperatureVis = {
+  min: 15,
+  max: 45,
+  palette: [
+    '040274', '040281', '0502a3', '0502b8', '0502ce', '0502e6',
+    '0602ff', '235cb1', '307ef3', '269db1', '30c8e2', '32d3ef',
+    '3be285', '3ff38f', '86e26f', '3ae237', 'b5e22e', 'd6e21f',
+    'fff705', 'ffd611', 'ffb613', 'ff8b13', 'ff6e08', 'ff500d',
+    'ff0000', 'de0101', 'c21301', 'a71001', '911003'
+  ],
+};
+
+Map.addLayer(mean_aqua_terra, landSurfaceTemperatureVis,
+    'MODIS Land Surface Temperature');
+    
+//8.5 Timeseries
+var aqua_terra = MODIS_Aqua_day.merge(MODIS_Terra_day) //merge the two collections
+
+var timeseries = ui.Chart.image.series({
+  imageCollection: aqua_terra,
+  region: Beijing,
+  reducer: ee.Reducer.mean(),
+  scale: 1000,
+  xProperty: 'system:time_start'})
+  .setOptions({
+     title: 'Temperature time series',
+     vAxis: {title: 'LST Celsius'}});
+print(timeseries);

@@ -1,0 +1,123 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var table = ee.FeatureCollection("FAO/GAUL/2015/level1");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//8.2 load in Vector data
+//--------------------------Vector data---------------------------
+
+var dataset = ee.FeatureCollection("FAO/GAUL/2015/level1");
+
+var dataset_style = dataset.style({
+  color: '1e90ff',
+  width: 2,
+  fillColor: '00000000',  // with alpha set for partial transparency
+//  lineType: 'dotted',
+//  pointSize: 10,
+//  pointShape: 'circle'
+});
+
+Map.addLayer(dataset, {}, 'Second Level Administrative Units_1');
+
+var Beijing = dataset.filter('ADM1_CODE == 899');
+
+Map.addLayer(Beijing, {}, 'Beijing');
+
+//8.3 load in Landsat data
+//--------------------------Landsat data---------------------------
+
+function applyScaleFactors(image) {
+  var opticalBands = image.select('SR_B.').multiply(0.0000275).add(-0.2);
+  //select optical bands (e.g. green, red, blue) and apply scale factor
+  var thermalBands = image.select('ST_B.*').multiply(0.00341802).add(149.0);
+  //select thermal bands and apply scale factor
+  return image.addBands(opticalBands, null, true)
+              .addBands(thermalBands, null, true);
+  //add this back to the image
+}
+
+var landsat = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+  .filterDate('2022-01-01', '2022-10-10')
+  .filter(ee.Filter.calendarRange(5, 9,'month'))
+  .filterBounds(Beijing)  // Intersecting ROI
+  .filter(ee.Filter.lt("CLOUD_COVER", 1))
+  .map(applyScaleFactors);
+//filter summer months instead of the whole year
+
+print(landsat)
+
+var subtracted = landsat.select('ST_B10').map(function (image) {
+  var subtract = image.subtract(273.1);
+  //temperature band is B10 but it is in kelvin and not celsius hence minus 273.1
+  var mask = subtract.gt(0);
+  //set mask up for values below 0 because likely no data
+  var mask_0 = subtract.updateMask(mask); //Apply this in a mask
+return mask_0
+})  
+
+//take the mean and clip to study area
+var subtracted_mean = subtracted.reduce(ee.Reducer.mean())
+  .clip(Beijing)
+  
+  // set up some of the visualisation paramters 
+// the palette is taken from the MODIS example (which we will see later on)
+var vis_params = {
+  min: 20,
+  max: 55,
+    palette: [
+    '040274', '040281', '0502a3', '0502b8', '0502ce', '0502e6',
+    '0602ff', '235cb1', '307ef3', '269db1', '30c8e2', '32d3ef',
+    '3be285', '3ff38f', '86e26f', '3ae237', 'b5e22e', 'd6e21f',
+    'fff705', 'ffd611', 'ffb613', 'ff8b13', 'ff6e08', 'ff500d',
+    'ff0000', 'de0101', 'c21301', 'a71001', '911003'
+  ]
+};
+
+Map.addLayer(subtracted_mean, vis_params, 'Landsat Temp');
+
+//8.4 MODIS
+
+//061: Indicates the processing level of the data. Level 061 generally corresponds to geolocated and georeferenced swath data.
+//MYD11A1: This is the specific product identifier. The "MYD" prefix indicates that the data comes from the MODIS sensor
+//on the Aqua satellite (as opposed to "MOD" for Terra). "11" refers to land surface products, and "A1" refers to the MODIS
+//Land Surface Temperature and Emissivity (LST&E) product
+
+//Aqua
+var MODIS_Aqua_day = ee.ImageCollection('MODIS/061/MYD11A1')
+  .filterDate('2022-01-01', '2022-10-10')
+  .filter(ee.Filter.calendarRange(5, 9,'month'))
+  .filterBounds(Beijing)  // Intersecting ROI;
+  .select('LST_Day_1km')
+  //Select daytime land surface temperature at 1km resolution
+
+print(MODIS_Aqua_day, "MODIS_AQUA")  
+
+//Terra
+var MODIS_Terra_day = ee.ImageCollection('MODIS/061/MOD11A1')
+  .filterDate('2022-01-01', '2022-10-10')
+  .filter(ee.Filter.calendarRange(5, 9,'month'))
+  .filterBounds(Beijing)  // Intersecting ROI;
+  .select('LST_Day_1km')
+
+print(MODIS_Terra_day, "MODIS_Terra")
+
+//scaling MODIS. According to documentation to multiply by 0.02 and subtract kelvin (273.1)
+function MODISscale(image) {
+  var temp = image.select('LST_.*').multiply(0.02).subtract(273.1);
+  return image.addBands(temp, null, true)
+}
+
+
+var MODIS_Aqua_day = ee.ImageCollection('MODIS/061/MYD11A1')
+  .filterDate('2022-01-01', '2022-10-10')
+  .filter(ee.Filter.calendarRange(5, 9,'month'))
+  .select('LST_Day_1km')
+  .map(MODISscale)
+  .filterBounds(Beijing);  // Intersecting ROI;
+
+print(MODIS_Aqua_day, "MODIS_AQUA")  
+
+var MODIS_Terra_day = ee.ImageCollection('MODIS/061/MOD11A1')
+  .filterDate('2022-01-01', '2022-10-10')
+  .filter(ee.Filter.calendarRange(5, 9,'month'))
+  .filterBounds(Beijing)  // Intersecting ROI;
+  .select('LST_Day_1km')
+  .map(MODISscale);

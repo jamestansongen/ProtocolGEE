@@ -1,0 +1,210 @@
+//1. Setting up
+
+//port of Beirut 
+Map.setCenter(35.51898, 33.90153, 15);
+
+//satellite view
+Map.setOptions("satellite");
+
+//area of interest to be 3km around port
+var aoi = ee.Geometry.Point(35.51898, 33.90153).buffer(3000);
+
+//2. Ttest
+//s1: the image collection
+//shock: the date of the event
+//pre_interval: the number of months before the event
+//post_interval: the number of months after the event
+
+function ttest(s1, shock, pre_interval, post_interval) {
+  
+  // Convert the shock date to a date object
+  var shock = ee.Date(shock);
+  // Filter the image collection to the pre-event period
+  var pre = s1.filterDate(
+    shock.advance(ee.Number(pre_interval).multiply(-1), "month"),
+  //advance moves date forward so in this case multiply by -1 to subtract
+    shock
+  );
+  // Filter the image collection to the post-event period
+  var post = s1.filterDate(shock, shock.advance(post_interval, "month"));
+  
+  // Calculate the mean, standard deviation, and number of images for the pre-event period
+  var pre_mean = pre.mean();
+  var pre_sd = pre.reduce(ee.Reducer.stdDev());
+  var pre_n = ee.Number(pre.filterBounds(aoi).size());
+  
+  // Calculate the mean, standard deviation, and number of images for the pre-event period
+  var post_mean = post.mean();
+  var post_sd = post.reduce(ee.Reducer.stdDev());
+  var post_n = ee.Number(post.filterBounds(aoi).size());
+  
+  // Calculate the pooled standard deviation
+  var pooled_sd = pre_sd
+    .multiply(pre_sd)
+    .multiply(pre_n.subtract(1))
+    .add(post_sd.multiply(post_sd).multiply(post_n.subtract(1)))
+    .divide(pre_n.add(post_n).subtract(2))
+    .sqrt();
+
+
+    // Calculate the denominator of the t-test
+  var denom = pooled_sd.multiply(
+    ee.Number(1).divide(pre_n).add(ee.Number(1).divide(post_n)).sqrt()
+  );
+
+
+    // Calculate the Degrees of Freedom, which is the number of observations minus 2
+  var df = pre_n.add(post_n).subtract(2);
+
+
+  print("Number of Images: ", df);
+
+
+    // Calculate the t-test using the:
+        // mean of the pre-event period, 
+        // the mean of the post-event period, 
+        // and the pooled standard deviation
+  var change = post_mean
+    .abs()
+    .subtract(pre_mean.abs())
+    .divide(denom)
+    .abs()
+    .subtract(2);
+
+
+    // return the t-values for each pixel
+  return change;
+}
+//note above t-test function is the absolute value of t to
+//understand tjhe change in magnitude and not the direction
+//subtracted 2 from the t-value as generally speaking if value above
+//2 the difference between both means is considered statistically
+//significant
+
+//3. Filtering the Sentinel 1 image
+function filter_s1(path) {
+  
+  // Filter the image collection to the ascending or descending orbit
+  var s1 = ee
+    .ImageCollection("COPERNICUS/S1_GRD")
+    //Sentinel-1 Ground Range Detected (GRD) dataset
+    .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VH"))
+    //images with "VH" polarisation
+    .filter(ee.Filter.eq("instrumentMode", "IW"))
+    ///Interferometric Wide-Swath
+    .filter(ee.Filter.eq("orbitProperties_pass", path))
+    //either ascending or descending
+    .filterBounds(aoi)
+    .select("VH");
+
+    // Find the most common relative orbit number
+  var orbit = s1
+    .aggregate_array("relativeOrbitNumber_start")
+    .reduce(ee.Reducer.mode());
+    //specific track that the satellite follows
+
+
+    // Filter the image collection to the most common relative orbit number
+  var s1 = s1.filter(ee.Filter.eq("relativeOrbitNumber_start", orbit));
+
+
+    // Calculate the t-test for the filtered image collection using the function we defined earlier
+  var change = ttest(s1, "2020-08-04", 12, 2);
+//date of the explosion
+//pre-event interval of 12 months to get a good baseline
+//post event interval of 2 months as much less miss the effects of the explosion
+//and much more risk including other effects like reconstruction
+
+    // Return the t-values for each pixel
+  return change;
+}
+
+//4. Apply function to the image once for each orbit and combine
+//two images into a single image
+
+// Call the filter_s1 function twice, once for each orbit, and then combine the two images into a single image
+var composite = ee
+  .ImageCollection([filter_s1("ASCENDING"), filter_s1("DESCENDING")])
+  .mean()
+  .clip(aoi);
+
+
+// Define a color palette
+var palette = ["440154", "3b528b", "21918c", "5ec962", "fde725"];
+
+
+// Add the composite to the map
+Map.addLayer(
+  composite,
+  { min: 0, max: 4, opacity: 0.8, palette: palette },
+  "change"
+);
+
+//Test same date but to a different year (e.g. 2018), also known as a placebo test
+//results showing a lot of statistically significant change
+//possibly port activity but scale and magnitude of change not as much as 2020 image
+
+//5. Validation
+//Using building footprint data and the t-test image we just generated, we can create
+//an estimate of the number of damaged buildings according to our model
+//threshold where pixels set to 0 (no damage) or 1 (damaged)
+// Create a mask of the t-test image, where pixels with a value greater than 0 are set to 1, and all other pixels are set to 0
+
+//Blue = no damage
+//Green = low damage
+//Yellow/Orange = medium damage
+//Red = high levels of damage
+
+var threshold = composite.updateMask(composite.gt(0));
+
+
+// Load the building footprints
+var buildings = ee
+  .FeatureCollection("projects/sat-io/open-datasets/MSBuildings/Lebanon")
+  .filterBounds(aoi);
+
+
+// Calculate the mean value of the t-test image within each building footprint
+var damaged_buildings = threshold.reduceRegions({
+  collection: buildings,
+  reducer: ee.Reducer.mean(),
+  scale: 1,
+});
+
+
+// Print the number of buildings with a mean value greater than 0
+// i.e., those displaying statistically  significant change
+print(damaged_buildings.filter(ee.Filter.gt("mean", 0)).size());
+
+
+// Create an empty image
+var empty = ee.Image().byte();
+
+
+// Paint the building footprints onto the empty image
+var outline = empty.paint({
+  featureCollection: damaged_buildings,
+  color: "mean",
+  width: 5,
+});
+
+
+// Define a color palette
+var building_palette = [
+  "0034f5",
+  "1e7d83",
+  "4da910",
+  "b3c120",
+  "fcc228",
+  "ff8410",
+  "fd3000",
+];
+
+
+// Add the image to the map
+Map.addLayer(
+  outline,
+  { palette: building_palette, min: 0, max: 2 },
+  "Damaged Buildings"
+);
+//Damaged buildings 9256 which is close to the estimate of 10000

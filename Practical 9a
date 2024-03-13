@@ -241,3 +241,57 @@ Export.table.toDrive({
   fileNamePrefix: triplets,
   fileFormat: 'CSV'
 });
+
+//Extension to plot heat index in GEE based (case study=London wards)
+
+//a. percentiles of mean column
+//var percentiles = mean_Landsat_ward.reduceColumns({
+//  reducer: ee.Reducer.percentile([10, 20, 30, 40, 50, 60, 70, 80, 90, 99, 100]),
+//  selectors: ['mean']
+//});
+
+//print(percentiles, "percentile") ///gives the overall percentile then need to map
+
+//b. pull out these values as numbers
+//var p40 = ee.Number(percentiles.get('p40'))
+//var p70 = ee.Number(percentiles.get('p70'))
+//var p90 = ee.Number(percentiles.get('p90'))
+//var p99 = ee.Number(percentiles.get('p99'))
+//var p100 = ee.Number(percentiles.get('p100'))
+
+//print(p40, "p40")// check one
+
+//c. do the case_when() equivalent
+//var resub= mean_Landsat_ward.map(function(feat){
+//  return ee.Algorithms.If(ee.Number(feat.get('mean')).lt(p40).and(ee.Number(feat.get('mean')).gt(0)),
+//  feat.set({'percentile_cat': 1}),
+//  ee.Algorithms.If(ee.Number(feat.get('mean')).gt(p40).and(ee.Number(feat.get('mean')).lt(p70)),
+//  feat.set({'percentile_cat': 2}),
+//  ee.Algorithms.If(ee.Number(feat.get('mean')).gt(p70).and(ee.Number(feat.get('mean')).lt(p90)),
+//  feat.set({'percentile_cat': 3}),
+//  ee.Algorithms.If(ee.Number(feat.get('mean')).gt(p90).and(ee.Number(feat.get('mean')).lt(p99)),
+//  feat.set({'percentile_cat': 4}),
+//  ee.Algorithms.If(ee.Number(feat.get('mean')).gt(p99).and(ee.Number(feat.get('mean')).lte(p100)),
+//  feat.set({'percentile_cat': 5}),  
+//  feat.set({'percentile_cat': 0}))
+//))))})
+
+//d. visualisation parameters
+//var visParams_vec = {
+//    'palette': ['#fee5d9', '#fcae91', '#fb6a4a', '#de2d26', '#a50f15'],
+//    'min': 0.0,
+//    'max': 5,
+//    'opacity': 0.8,
+//}
+
+//e. make an image and add to map
+//var image = ee.Image().float().paint(resub, 'percentile_cat')
+//Map.addLayer(image, visParams_vec, 'Percentile_cat')
+
+////example of adding a field to a dataset in GEE (similar to mutate in R)
+//var collectionWithCount = mean_Landsat_ward.map(function (feature) {
+  ///make a new column
+//  return feature.set('percentage',
+  // take the mean column and * 100                   
+//  feature.getNumber('mean').multiply(100));
+//});

@@ -159,3 +159,85 @@ var timeseries = ui.Chart.image.series({
      title: 'Temperature time series',
      vAxis: {title: 'LST Celsius'}});
 print(timeseries);
+
+//8.6 Statistics per spatial unit
+
+//Landsat
+//--------------------------Statistics per level 2---------------------------.
+
+var GAUL_2 = ee.FeatureCollection("FAO/GAUL/2015/level2");
+
+var Beijing_level2 = GAUL_2.filter('ADM1_CODE == 899');
+
+Map.addLayer(Beijing_level2, {}, 'Second Level Administrative Units_2');
+
+print(subtracted_mean)
+
+var mean_Landsat_level2 = subtracted_mean.reduceRegions({
+  collection: Beijing_level2,
+  reducer: ee.Reducer.mean(),
+  scale: 30,
+});
+
+Map.addLayer(mean_Landsat_level2, {}, 'mean_Landsat_level2');
+//mean column added to attribute table
+//There is a reduce percentile function…reducer: ee.Reducer.percentile([10, 20, 30, 40, 50, 60, 70, 80, 90])
+//that might also be useful. This takes all the pixels in each polygon and lists the value of the percentiles specified
+//in the attribute table
+
+// Export the FeatureCollection to a SHP file.
+Export.table.toDrive({
+  collection: mean_Landsat_level2,
+  description:'mean_Landsat_level2',
+  fileFormat: 'SHP'
+});
+
+//MODIS
+var chart = ui.Chart.image.seriesByRegion({
+    imageCollection: MODIS_Aqua_day,
+    regions: Beijing_level2, //this is the difference
+    reducer: ee.Reducer.mean()
+})
+
+print(chart)
+
+var timeseries_per_unit = ui.Chart.image.seriesByRegion({
+  imageCollection: aqua_terra,
+  //band: 'NDVI',
+  regions: Beijing_level2,
+  reducer: ee.Reducer.mean(),
+  scale: 1000,
+  //seriesProperty: 'label',
+  xProperty: 'system:time_start'
+})
+.setOptions({
+  title: 'Average temp per spatial unit',
+  hAxis: {title: 'Date', titleTextStyle: {italic: false, bold: true}},
+  vAxis: {
+    title: 'LST Celsius',
+    titleTextStyle: {italic: false, bold: true}
+  },
+  lineWidth: 1
+//  colors: ['0f8755', '808080'],
+});
+
+// Collect block, image, value triplets.
+var triplets = aqua_terra.map(function(image) {
+  return image.select('LST_Day_1km').reduceRegions({
+    collection: Beijing_level2.select(['ADM2_CODE']), 
+    reducer: ee.Reducer.mean(), 
+    scale: 30
+  }).filter(ee.Filter.neq('mean', null))
+    .map(function(f) { 
+      return f.set('imageId', image.id());
+    });
+}).flatten();
+
+print(triplets.first(), "trip")
+
+Export.table.toDrive({
+  collection: triplets, 
+  description: triplets, 
+  fileNamePrefix: triplets,
+  fileFormat: 'CSV'
+});

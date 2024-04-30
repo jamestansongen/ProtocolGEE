@@ -32,3 +32,59 @@
 //var interGeo = geometry1.intersection(geometry2, maxError);
 //2j: Union
 //var unGeo = geometry1.union(geometry2, maxError);
+
+//Start of tutorial
+
+//1. Zoom into region of interest
+// Set map center over the state of CT.
+Map.setCenter(-72.6978, 41.6798, 8);
+// Load US county dataset.
+var countyData = ee.FeatureCollection('TIGER/2018/Counties');
+// Filter the counties that are in Connecticut (more on filters later).
+var countyConnect = countyData.filter(ee.Filter.eq('STATEFP', '09'));
+// Get the union of all the county geometries in Connecticut.
+var countyConnectDiss = countyConnect.union(100);
+// Create a circular area using the first county in the Connecticut
+// FeatureCollection.
+var circle = ee.Feature(countyConnect.first())
+    .geometry().centroid(100).buffer(50000, 100);
+// Add the layers to the map with a specified color and layer name.
+Map.addLayer(countyConnectDiss, {color: 'red'}, 'CT dissolved');
+Map.addLayer(circle, {color: 'orange'}, 'Circle');
+
+//2. Use bounds() function to get rectangle that encompasses NSEW of the geometry
+var bound = countyConnectDiss.geometry().bounds(100);
+// Add the layer to the map with a specified color and layer name.
+Map.addLayer(bound, {color: 'yellow'}, 'Bounds');
+
+//3. convexHull() to get extremities of the geometry
+var convex = countyConnectDiss.geometry().convexHull(100);
+// Add the layer to the map with a specified color and layer name.
+Map.addLayer(convex, {color: 'blue'}, 'Convex Hull');
+
+//4. intersection() to get common areas of two geometries
+var intersect = convex.intersection(circle, 100);
+// Add the layer to the map with a specified color and layer name.
+Map.addLayer(intersect, {color: 'green'}, 'Circle and convex intersection');
+
+//5. union() to combine two geometries
+// number is the maximum error in meters.
+var union = convex.union(circle, 100);
+// Add the layer to the map with a specified color and layer name.
+Map.addLayer(union, {color: 'purple'}, 'Circle and convex union');
+
+//6. difference() to get the spatial difference
+var diff = convex.difference(circle, 100);
+// Add the layer to the map with a specified color and layer name.
+Map.addLayer(diff, {color: 'brown'}, 'Circle and convex difference');
+
+//7. calculate statistics related to geometries
+// Find area of feature.
+var ar = countyConnectDiss.geometry().area(100);
+print(ar);
+// Find length of line geometry (You get zero since this is a polygon).
+var lengths = countyConnectDiss.geometry().length(100);
+print(lengths);
+// Find perimeter of feature.
+var peri = countyConnectDiss.geometry().perimeter(100);
+print(peri);

@@ -1,0 +1,34 @@
+// Source: https://developers.google.com/earth-engine/tutorials/community/beginners-cookbook
+
+//1. Basic functions
+//1a. Declaring variables
+//var variableName = ee.ContainerType(value);
+//1b. Centering the map
+//Map.setCenter(long, lat, zoomLevel);
+//where zoom from 0 (no zoom) to 20 (highest zoom level)
+//1c. Displaying metadata
+//print(variableName)
+//1d. Adding a layer to the map
+//Map.addLayer(variableName)
+
+//2. Common operations on geometries
+//2a. Area of geometry
+//var geoArea = geometry.area(maxError);
+//2b. Length of a line
+//var linLen = lineString.length(maxError);
+//2c. Perimter of a geometry
+//var geoPeri = geometry.perimeter(maxError);
+//2d. Reduce number of vertices in geometry
+//var simpGeo = geometry.simplify(maxError);
+//2e. Finding the centroid of a geometry
+//var centrGeo = geometry.centroid(maxError);
+//2f. Creating buffer around a geometry
+//var buffGeo = geometry.buffer(radius, maxError);
+//2g. Finding the bounding rectangle of a geometry
+//var bounGeo = geometry.bounds(maxError);
+//2h. Finding the smallest polygon that can envelope a geometry
+//var convexGeo = geometry.convexHull(maxError);
+//2i: Intersection
+//var interGeo = geometry1.intersection(geometry2, maxError);
+//2j: Union
+//var unGeo = geometry1.union(geometry2, maxError);

@@ -256,6 +256,8 @@ var water =
            [114.38010119028084, 22.74723939665864],
            [114.38010119028084, 22.749930631434133]]]], null, false);
 /***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Source: https://andrewmaclachlan.github.io/CASA0023/6_classification_I.html
+
 
 //6.3 Vector Data
 

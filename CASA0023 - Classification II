@@ -48,6 +48,8 @@ var grass =
           [39.284513059654046, -6.823094696723419],
           [39.284513059654046, -6.814572339927274]]], null, false);
 /***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Source: https://andrewmaclachlan.github.io/CASA0023/7_classification_II.html
+
 //7.2 Data
 //7.2.1 Vector data
 //--------------------------Vector data---------------------------

@@ -1,0 +1,93 @@
+// Source: https://developers.google.com/earth-engine/tutorials/community/modis-ndvi-time-series-animation
+
+//1. Get MODIS NDVI collection
+
+//Retrive MODIS Terra Vegetation Indices 16-Day Global 1km dataset and select NDVI
+var col = ee.ImageCollection('MODIS/061/MOD13A2').select('NDVI');
+//The MOD13A2 V6 product provides two Vegetation Indices: NDVI and EVI
+
+//2. Define clipping and region boundary geometries
+//Optional but sets pixels outside AOI as null
+
+//Define a mask to clip NDVI data by
+//Large Scale International Boundary Vector Dataset
+var mask = ee.FeatureCollection('USDOS/LSIB_SIMPLE/2017')
+  .filter(ee.Filter.eq('wld_rgn', 'Africa'));
+
+// Define the regional bounds of animation frames.
+var region = ee.Geometry.Polygon(
+  [[[-18.698368046353494, 38.1446395611524],
+    [-18.698368046353494, -36.16300755581617],
+    [52.229366328646506, -36.16300755581617],
+    [52.229366328646506, 38.1446395611524]]],
+  null, false
+);
+
+//3. Group images by composite date
+//group inter-annual image data representing the same 16-day composite windows into a list
+
+//add calendar date to metadata of each image so common property to group
+//map function to apply a function to each image in the image collection. returns a modified version of the image
+col = col.map(function(img) {
+// retrieves acquisition time of the image
+  var doy = ee.Date(img.get('system:time_start')).getRelative('day', 'year');
+//set function is used to add or update properties of the image
+  return img.set('doy', doy);
+});
+
+//join operation between a distinct day-of-year collection and the complete collection modified to include the 'DOY' property
+var distinctDOY = col.filterDate('2013-01-01', '2014-01-01');
+
+
+//define a filter that identifies which images from the complete collection
+// match the DOY from the distinct DOY collection.
+var filter = ee.Filter.equals({leftField: 'doy', rightField: 'doy'});
+
+//define a join.
+var join = ee.Join.saveAll('doy_matches');
+
+//apply the join and convert the resulting FeatureCollection to an imageCollection.
+var joinCol = ee.ImageCollection(join.apply(distinctDOY, col, filter));
+//copy of the distinct DOY collection with a property added to each image (i.e. same DOY)
+
+//4. Reduce composite groups
+//Apply median reduction among matching DOY collections.
+//Median produces results that is free of missing data and outliers
+var comp = joinCol.map(function(img) {
+  var doyCol = ee.ImageCollection.fromImages(
+    img.get('doy_matches')
+  );
+  return doyCol.reduce(ee.Reducer.median());
+});
+
+//5. Make visualisation images
+//define RGB visualization parameters.
+var visParams = {
+  min: 0.0,
+  max: 9000.0,
+  palette: [
+    'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718', '74A901',
+    '66A000', '529400', '3E8601', '207401', '056201', '004C00', '023B01',
+    '012E01', '011D01', '011301'
+  ],
+};
+
+//create RGB visualization images for use as animation frames.
+var rgbVis = comp.map(function(img) {
+  return img.visualize(visParams).clip(mask);
+});
+
+//6. Create animated gif
+// Define GIF visualization parameters.
+var gifParams = {
+  'region': region, //defined in set 2
+  'dimensions': 600, //600px
+  'crs': 'EPSG:3857',
+  'framesPerSecond': 10
+};
+
+// Print the GIF URL to the console.
+print(rgbVis.getVideoThumbURL(gifParams));
+
+// Render the GIF animation in the console.
+var thumbnail = ui.Thumbnail(rgbVis, gifParams);

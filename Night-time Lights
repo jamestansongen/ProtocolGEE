@@ -2,21 +2,25 @@
 
 // Compute the trend of night-time lights.
 
-// Adds a band containing image date as years since 1991.
+//adds a band containing image date as years since 1991.
 function createTimeBand(img) {
   var year = ee.Date(img.get('system:time_start')).get('year').subtract(1991);
   return ee.Image(year).byte().addBands(img);
 }
 
-// Map the time band creation helper over the night-time lights collection.
-// https://developers.google.com/earth-engine/datasets/catalog/NOAA_DMSP-OLS_NIGHTTIME_LIGHTS
+//map the time band creation helper over the night-time lights collection.
+//https://developers.google.com/earth-engine/datasets/catalog/NOAA_DMSP-OLS_NIGHTTIME_LIGHTS
 var collection = ee.ImageCollection('NOAA/DMSP-OLS/NIGHTTIME_LIGHTS')
     .select('stable_lights')
     .map(createTimeBand);
 
-// Compute a linear fit over the series of values at each pixel, visualizing
-// the y-intercept in green, and positive/negative slopes as red/blue.
+//compute a linear fit over the series of values at each pixel, visualizing
+//the y-intercept in green, and positive/negative slopes as red/blue.
 Map.addLayer(
     collection.reduce(ee.Reducer.linearFit()),
     {min: 0, max: [0.18, 20, -0.18], bands: ['scale', 'offset', 'scale']},
     'stable lights trend');
+//min: 0 specifies the minimum value to be mapped to the color scale for visualization. In this case, it's set to 0.
+//max: [0.18, 20, -0.18] specifies the maximum values for each band in the visualization.
+//The first value (0.18) represents the maximum value for the 'scale' band, the second value (20) represents the maximum value for the 'offset' band, and the third value (-0.18) represents the maximum value for the second 'scale' band.
+//bands: ['scale', 'offset', 'scale'] specifies which bands from the result of the reduction to visualize. In this case, it visualizes the 'scale' band, 'offset' band, and then again the 'scale' band.

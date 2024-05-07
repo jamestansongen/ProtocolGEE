@@ -14,6 +14,8 @@ var lossPixels = ee.Number(6)
 var countries = ee.FeatureCollection('USDOS/LSIB_SIMPLE/2017');
 var selected = countries.filter(ee.Filter.eq('country_na', ee.String(country)));
 
+//tree cover//
+
 //2. Select the Global Forest Change dataset from GEE catalogue
 var gfc2018 = ee.Image('UMD/hansen/global_forest_change_2018_v1_6');
 //note dataset should not be used for inter-year comparison due to variation in methods to produce the data
@@ -24,3 +26,94 @@ var canopyCover = gfc2018.select(['treecover2000']);
 //4. Apply minimum canopy cover percentage (e.g. gte/greater to or equal 10%) and selfMask to set other areas transparent by assigning value zero
 var canopyCover10 = canopyCover.gte(cc).selfMask();
 
+//5. Apply minimum area requirement using connectedPixelCount (e.g. gte 6 pixels) else it will use 8 neighbour adjacency to determine connectivity
+//Use connectedPixelCount() to get contiguous area
+var contArea = canopyCover10.connectedPixelCount();
+//Apply the minimum area requirements
+var minArea = contArea.gte(pixels).selfMask();
+
+//6. Scale the results in nominal value based on the dataset's projection to display on the map and ensure pixel area does not change with zoom
+var prj = gfc2018.projection();
+var scale = prj.nominalScale();
+Map.addLayer(minArea.reproject(prj.atScale(scale)), {
+    palette: ['#96ED89']
+}, 'tree cover: >= min canopy cover & area (light green)');
+
+//7.Calculate tree cover area (ha). Use pixelArea() to get the value of each pixel in square metres and convert to hectare and sum over result for measure of area
+var forestArea = minArea.multiply(ee.Image.pixelArea()).divide(10000);
+var forestSize = forestArea.reduceRegion({
+    reducer: ee.Reducer.sum(),
+    geometry: selected.geometry(),
+    scale: 30,
+    maxPixels: 1e13
+});
+print(
+    'Year 2000 tree cover (ha) \nmeeting minimum canopy cover and \nforest area thresholds \n ',
+    forestSize.get('treecover2000'));
+    
+//8. Calculate actual average minimum forest area to check if selected number of pixels for minimum area (e.g. 6) matches or comes close to minimum area intended in hectares (e.g. 0.5 ha)
+var pixelCount = minArea.reduceRegion({
+    reducer: ee.Reducer.count(),
+    geometry: selected.geometry(),
+    scale: 30,
+    maxPixels: 1e13
+});
+var onePixel = forestSize.getNumber('treecover2000')
+    .divide(pixelCount.getNumber('treecover2000'));
+var minAreaUsed = onePixel.multiply(pixels);
+print('Minimum forest area used (ha)\n ', minAreaUsed);
+
+//tree loss//
+//9. Select tree loss pixels inside the derived tree cover
+var treeLoss = gfc2018.select(['lossyear']);
+var treeLoss01 = treeLoss.eq(1).selfMask(); // tree loss in year 2001
+//select the tree loss within the derived tree cover
+//(>= canopy cover and area requirements).
+var treecoverLoss01 = minArea.and(treeLoss01).rename('loss2001').selfMask();
+
+//10. Apply minimum mapping unit using connected PixelCount()
+//create connectedPixelCount() to get contiguous area.
+var contLoss = treecoverLoss01.connectedPixelCount();
+//apply the minimum area requirement.
+var minLoss = contLoss.gte(lossPixels).selfMask();
+
+//11. Calculate the tree loss area (ha)
+var lossArea = minLoss.multiply(ee.Image.pixelArea()).divide(10000);
+var lossSize = lossArea.reduceRegion({
+    reducer: ee.Reducer.sum(),
+    geometry: selected.geometry(),
+    scale: 30,
+    maxPixels: 1e13
+});
+print(
+    'Year 2001 tree loss (ha) \nmeeting minimum canopy cover and \nforest area thresholds \n ',
+    lossSize.get('loss2001'));
+    
+//Subsequent tree cover//
+//12. Create a new tree cover by removing the tree loss
+//unmask the derived loss
+//unmask the derived loss.
+var minLossUnmask = minLoss.unmask();
+//switch the binary value of the loss (0, 1) to (1, 0).
+var notLoss = minLossUnmask.select('loss2001').eq(0);
+//combine the derived tree cover and not-loss with 'and'.
+var treecoverLoss01 = minArea.and(notLoss).selfMask();
+
+//13. Apply minimum area requirement and reproject in nominal scale
+var contArea01 = treecoverLoss01.connectedPixelCount();
+var minArea01 = contArea01.gte(pixels);
+Map.addLayer(minArea01.reproject(prj.atScale(scale)), {
+    palette: ['#168039']
+}, 'tree cover 2001 (gain not considered) (light green)');
+
+//14. Calculate new tree cover area (ha)
+var forestArea01 = minArea01.multiply(ee.Image.pixelArea()).divide(10000);
+var forestSize01 = forestArea01.reduceRegion({
+    reducer: ee.Reducer.sum(),
+    geometry: selected.geometry(),
+    scale: 30,
+    maxPixels: 1e13
+});
+print(
+    'Year 2001 tree cover (ha) \nmeeting minimum canopy cover and \nforest area thresholds \n ',
+    forestSize01.get('treecover2000'));

@@ -1,0 +1,8 @@
+//Tutorial Source: https://developers.google.com/earth-engine/tutorials/community/forest-cover-loss-estimation
+
+//1. Select a country and set parameters
+//Selected country (e.g. Bolivia)
+var country = 'Bolivia'
+//Minimum canopy cover percentage (e.g. 10%)
+var cc = ee.Number(10);
+//Minimum forest areas in pixels (e.g. 6 pixels~0.5 ha in this example)

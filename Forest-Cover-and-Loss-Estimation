@@ -6,3 +6,21 @@ var country = 'Bolivia'
 //Minimum canopy cover percentage (e.g. 10%)
 var cc = ee.Number(10);
 //Minimum forest areas in pixels (e.g. 6 pixels~0.5 ha in this example)
+var pixels = ee.Number(6)
+//Minimum mapping area for tress loss (usually same as minimum forest area)
+var lossPixels = ee.Number(6)
+
+//Load country features from the Large Scale International Boundary (LSIB) dataset
+var countries = ee.FeatureCollection('USDOS/LSIB_SIMPLE/2017');
+var selected = countries.filter(ee.Filter.eq('country_na', ee.String(country)));
+
+//2. Select the Global Forest Change dataset from GEE catalogue
+var gfc2018 = ee.Image('UMD/hansen/global_forest_change_2018_v1_6');
+//note dataset should not be used for inter-year comparison due to variation in methods to produce the data
+
+//3. Select 'treecover2000' in the dataset
+var canopyCover = gfc2018.select(['treecover2000']);
+
+//4. Apply minimum canopy cover percentage (e.g. gte/greater to or equal 10%) and selfMask to set other areas transparent by assigning value zero
+var canopyCover10 = canopyCover.gte(cc).selfMask();
+

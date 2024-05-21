@@ -59,3 +59,116 @@ var VIIRS= ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMCFG")
 Map.setOptions('HYBRID')
 Map.centerObject(AOI)
 Map.addLayer(VIIRS.first(),VIIRSvis,'Nighttime Lights')
+
+//2. Create timelapse
+
+//function to create timelapse
+var gif = function (col, col_vis, AOI) {
+
+
+    // Define the date annotations to be printed in the top left of the gif in white
+  var annotations = [
+    {
+      textColor: "white",
+      position: "left",
+      offset: "1%",
+      margin: "1%",
+      property: "label",
+      // Dynamically size the annotations according to the size of the AOI
+      scale: AOI.area(100).sqrt().divide(200),
+    },
+  ];
+
+
+    // Next, we want to map over the image collection,
+    var rgbVis = col.map(function (image) {
+        // Get the date of the image and format it
+        var start = ee.Date(image.get("system:time_start"));
+        var label = start.format("YYYY-MM-dd");
+        // And visualize the image using the visualization parameters defined earlier.
+        // We also want to set a property called "label" that stores the formatted date 
+        return image.visualize(col_vis).set({ label: label });
+  });
+
+
+    // Now we use the label property and the annotateImage function from @gena_d to annotate each image with the date. 
+  rgbVis = rgbVis.map(function (image) {
+    return text.annotateImage(image, {}, AOI, annotations);
+  });
+
+
+  // Define GIF visualization parameters.
+  var gifParams = {
+    maxPixels: 27017280,
+    region: AOI,
+    crs: "EPSG:3857",
+    dimensions: 640,
+    framesPerSecond: 5,
+  };
+
+
+  // Export the gif to Google Drive
+  Export.video.toDrive({
+    collection: rgbVis, // the image collection
+    description: export_name, // the name of the file
+    dimensions: 1080, // the dimensions of the gif
+    framesPerSecond: 5, // the number of frames per second
+    region: AOI, // the area of interest
+  });
+  // Print the GIF URL to the console.
+  print(rgbVis.getVideoThumbURL(gifParams));
+
+
+  // Render the GIF animation in the console.
+  print(ui.Thumbnail(rgbVis, gifParams));
+};
+// Change AOI, startDate, endDate, col (i.e. image collection) and col_vis (visualisation parameters) as necessary
+
+//Generate gif on the Fall of Mosul
+gif(VIIRS, VIIRSvis, AOI);
+
+//3. The Qayyarah Fires
+//Create AOI for Mosul and Qayyarah
+
+var mosul = ee.Feature(
+        ee.Geometry.Polygon(
+            [[[43.054977780266675, 36.438274276521234],
+              [43.054977780266675, 36.290642221212416],
+              [43.24792516796199, 36.290642221212416],
+              [43.24792516796199, 36.438274276521234]]], null, false),
+        {
+          "label": "Mosul",
+          "system:index": "0"
+        }),
+
+
+    qayyarah = ee.Feature(
+        ee.Geometry.Polygon(
+            [[[43.08240275545117, 35.8925587996721],
+              [43.08240275545117, 35.77899970860588],
+              [43.26642375154492, 35.77899970860588],
+              [43.26642375154492, 35.8925587996721]]], null, false),
+        {
+          "label": "Qayyarah",
+          "system:index": "0"
+        })
+
+
+// Let's put these together in a list 
+var regions=[qayyarah, mosul]
+
+//Create chart that will take the mean value of the VIIRS image in each rectangle over time
+var chart =
+    ui.Chart.image
+        .seriesByRegion({
+          imageCollection: VIIRS,
+          regions: regions,
+          reducer: ee.Reducer.mean(),
+          seriesProperty:'label'
+        }).setOptions({
+          title: 'Nighttime Lights'
+        });
+        
+print(chart)
+//Mosul (red line) darkening in 2014 as city is taken by ISIS before brightening subsequently as the city is liberated
+//Qayyarah (blue line) becoming brighter at night in 2016 as oilfields are set on fire and later extinguished and becomes dark again

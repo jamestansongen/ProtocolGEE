@@ -1,0 +1,61 @@
+//Source: https://bellingcat.github.io/RS4OSINT/C1_Lights.html
+
+//Visible Infrared Imaging Radiometer Suite (VIIRS) nighttime lights dataset
+
+//1. Pre-Processing
+//import packages written by Gennadii Donchyts
+//utils and text to annotate the date of each image on the timelapse
+var utils = require("users/gena/packages:utils");
+var text = require("users/gena/packages:text");
+
+//define Area of Interest (AOI)
+var AOI = ee.Geometry.Polygon(
+        [[[42.555362833405326, 36.62010778397765],
+          [42.555362833405326, 35.18296243288332],
+          [44.681217325592826, 35.18296243288332],
+          [44.681217325592826, 36.62010778397765]]])
+
+//start and end dates for the gif
+var startDate = '2013-01-01';
+var endDate = '2018-01-01';
+
+//file name for exporting gif
+var export_name='qayyarah_viirs'
+
+// A palette to visualize the VIIRS imagery. This one is similar to Matplotlib's "Magma" palette. 
+var viirs_palette = [
+  "#000004",
+  "#320a5a",
+  "#781b6c",
+  "#bb3654",
+  "#ec6824",
+  "#fbb41a",
+  "#fcffa4",
+];
+
+// Visualisation parameters for the VIIRS imagery, defining a minimum and maximum value, and referencing the palette we just created
+var VIIRSvis = { min: -0.1, max: 1.6, palette: viirs_palette };
+
+var VIIRS= ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMCFG") 
+                    .select('avg_rad')
+                    // Calculate the sum of the 'avg_rad' band within the AOI
+                    .map(function(image) { 
+                    var blank=image.reduceRegions({ // reduceRegions is a function that allows us to reduce the values of a band within a
+                                    collection: AOI, // geometry. In this case, we're reducing the values of the 'avg_rad' band within the AOI
+                                    reducer: ee.Reducer.sum(), // We're using the sum reducer, which will sum the values of the 'avg_rad' band
+                                    scale: 10}) // We're reducing the values of the 'avg_rad' band at a scale of 10m
+                                .first() // We only want the first element of the collection, which is the sum of the 'avg_rad' band within the AOI
+                                .get('sum') // We want the value of the 'sum' property, which is the sum of the 'avg_rad' band within the AOI
+                    // For each image, define a property 'blank' that stores the sum of the 'avg_rad' band within the AOI. 
+                    // We're also going to take a base 10 log of the image-- this will help us visualize the data by dampening extreme values             
+                    return image.set('blank', blank).log10().unmask(0)
+                    })
+                    // Now, we can filter images which are fully or partially blank over our AOI
+                    .filter(ee.Filter.gt('blank', 10))
+                    // Finally, we filter the collection to the specified date range
+                    .filterDate(startDate, endDate)
+                    
+//Set basemap to satellite and center to AOI
+Map.setOptions('HYBRID')
+Map.centerObject(AOI)
+Map.addLayer(VIIRS.first(),VIIRSvis,'Nighttime Lights')

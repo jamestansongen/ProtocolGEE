@@ -1,0 +1,25 @@
+//Source: https://bellingcat.github.io/RS4OSINT/C2_Refineries.html
+
+//Machine Learning Workflow
+//1. Pre-processing
+
+//Select date range from 2020 to 2021
+var start='2020-04-01'
+var end='2021-07-01'
+
+var bands = ['B2', 'B3', 'B4','B5','B6','B7','B8', 'B8A','B11','B12']
+
+//Filter out cloudy images for Sentinel-2
+var sentinel = ee.ImageCollection('COPERNICUS/S2_SR')
+                  .filter(ee.Filter.date(start, end))
+                  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10))
+                  .mean()
+                  .select(bands)
+                  
+//NDVI
+var ndvi=sentinel.normalizedDifference(['B8','B4'])
+                  .select(['nd'],['ndvi'])
+                  
+//NDWI
+var ndwi=sentinel.normalizedDifference(['B3','B8'])
+                  .select(['nd'],['ndwi'])

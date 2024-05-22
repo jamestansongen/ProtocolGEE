@@ -220,6 +220,7 @@ var testAccuracy = validated.errorMatrix('class', 'classification');
 
 print('Confusion Matrix ', testAccuracy);
 print('Validation overall accuracy: ', testAccuracy.accuracy())
+//Note that the high accuracy could be due to spatial autocorrelation in the training data
 
 //convert raster into a series of points (convert areas predicted to be oil surrounded by an area not predicted to be oil) and convert to a point
 var vectors = oil_prediction.reduceToVectors({
@@ -232,7 +233,6 @@ var vectors = oil_prediction.reduceToVectors({
   }).filterBounds(AOI)
   
 Map.addLayer(vectors.style({color: 'black', fillColor: '#00f2ff', pointSize:5}),{},'Oil Contamination Points',false)
-
 
 Export.image.toAsset({
   image:oil_prediction,

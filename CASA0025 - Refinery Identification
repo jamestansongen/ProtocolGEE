@@ -1,5 +1,8 @@
 /**** Start of imports. If edited, may not auto-convert in the playground. ****/
-var oil = /* color: #00ffff */ee.Geometry.MultiPolygon(
+var oil = 
+    /* color: #00ffff */
+    /* shown: false */
+    ee.Geometry.MultiPolygon(
         [[[[42.060219441236946, 36.999323165570374],
            [42.06058422166297, 36.998689093502456],
            [42.061270867170784, 36.99894615038349],
@@ -43,7 +46,10 @@ var oil = /* color: #00ffff */ee.Geometry.MultiPolygon(
            [42.06749322443638, 37.003760474127525],
            [42.066720748240094, 37.00367479402259],
            [42.065476203257184, 37.00367479402259]]]]),
-    urban = /* color: #bf04c2 */ee.Geometry.MultiPolygon(
+    urban = 
+    /* color: #bf04c2 */
+    /* shown: false */
+    ee.Geometry.MultiPolygon(
         [[[[42.06154944925938, 37.000590245934866],
            [42.06335189371739, 36.9976083971626],
            [42.06708552866612, 36.99880800555517],
@@ -73,7 +79,10 @@ var oil = /* color: #00ffff */ee.Geometry.MultiPolygon(
            [42.073810460365024, 36.9606736830686],
            [42.0729950688245, 36.95902767631145],
            [42.0718792698743, 36.95830753716659]]]]),
-    agriculture = /* color: #ff0000 */ee.Geometry.MultiPolygon(
+    agriculture = 
+    /* color: #ff0000 */
+    /* shown: false */
+    ee.Geometry.MultiPolygon(
         [[[[42.042043940831576, 37.01780711206839],
            [42.04238726358548, 37.01177611143123],
            [42.054832713414584, 37.010953665169644],
@@ -87,7 +96,10 @@ var oil = /* color: #00ffff */ee.Geometry.MultiPolygon(
            [41.44425525560194, 36.819528462183875],
            [41.44786014451795, 36.81513090885213],
            [41.46468295945936, 36.823650938963965]]]]),
-    AOI = /* color: #00ff00 */ee.Geometry.Polygon(
+    AOI = 
+    /* color: #00ff00 */
+    /* shown: false */
+    ee.Geometry.Polygon(
         [[[41.29238815745107, 37.09728245970528],
           [41.18801804026357, 36.80096020448545],
           [41.53958054026357, 36.69972805745089],
@@ -98,6 +110,8 @@ var oil = /* color: #00ffff */ee.Geometry.MultiPolygon(
           [41.92410202463857, 37.180483628078896]]]);
 /***** End of imports. If edited, may not auto-convert in the playground. *****/
 //Source: https://bellingcat.github.io/RS4OSINT/C2_Refineries.html
+
+Map.setCenter(47.5388, 30.5156, 10);
 
 //Machine Learning Workflow
 //1. Pre-processing
@@ -190,8 +204,46 @@ var model = ee.Classifier.smileRandomForest(400)
 ////Predict class of new pixels
 var prediction = image.classify(model)
 
-//isolate out only class 0:oil
+//isolate out only class 0: oil
 var oil_prediction=prediction.updateMask(prediction.eq(0))
 
-
+//add oil prediction layer
 Map.addLayer(oil_prediction, {palette:'red'}, 'Predicted Oil Contamination')
+
+//4. Validation
+
+//take validation featureCollection containing labelled points and have model calssify it
+var validated = validation.classify(model);
+
+//create confusion matrix
+var testAccuracy = validated.errorMatrix('class', 'classification');
+
+print('Confusion Matrix ', testAccuracy);
+print('Validation overall accuracy: ', testAccuracy.accuracy())
+
+//convert raster into a series of points (convert areas predicted to be oil surrounded by an area not predicted to be oil) and convert to a point
+var vectors = oil_prediction.reduceToVectors({
+  geometry: AOI,
+  scale: 10,
+  geometryType: 'centroid',
+  eightConnected: true,
+  labelProperty: 'classification',
+  maxPixels:1653602926
+  }).filterBounds(AOI)
+  
+Map.addLayer(vectors.style({color: 'black', fillColor: '#00f2ff', pointSize:5}),{},'Oil Contamination Points',false)
+
+
+Export.image.toAsset({
+  image:oil_prediction,
+  region:AOI,
+  description: 'Rojava_Oil_Area',
+  maxPixels: 279757956
+})
+
+
+Export.table.toAsset({
+  collection:vectors.filterBounds(AOI),
+  description: 'Rojava_Oil_Points',
+  
+})

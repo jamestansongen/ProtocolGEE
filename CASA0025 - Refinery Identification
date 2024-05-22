@@ -1,7 +1,107 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var oil = /* color: #00ffff */ee.Geometry.MultiPolygon(
+        [[[[42.060219441236946, 36.999323165570374],
+           [42.06058422166297, 36.998689093502456],
+           [42.061270867170784, 36.99894615038349],
+           [42.0608417137284, 36.999614494207144]]],
+         [[[42.05964008408973, 37.00031710573878],
+           [42.06013361054847, 37.000094327175596],
+           [42.06062713700721, 37.00029996894939],
+           [42.06009069520423, 37.00059129384351]]],
+         [[[42.05582061845252, 37.000454199914756],
+           [42.056507263960334, 36.99934030257991],
+           [42.05717245179603, 36.999271754518595],
+           [42.05738702851722, 36.99964876809103],
+           [42.05631414491126, 37.000505610167025],
+           [42.05607811051795, 37.00079693427321]]],
+         [[[42.052022610487434, 36.999683041959464],
+           [42.05313840943763, 36.99934030257991],
+           [42.05354610520789, 36.99964876809103],
+           [42.052516136946174, 36.99997436921738]]],
+         [[[42.05661418467198, 37.00244098980475],
+           [42.057472491556744, 37.00259521642697],
+           [42.05777289896641, 37.0029893497069],
+           [42.057966018015485, 37.00334920874322],
+           [42.05927493601475, 37.00334920874322],
+           [42.06032636194859, 37.00343488921508],
+           [42.06081988840733, 37.00357197776921],
+           [42.06109883814488, 37.00309216674824],
+           [42.061935687357526, 37.0031949836505],
+           [42.06262233286534, 37.003914698073075],
+           [42.062708163553815, 37.00460013404574],
+           [42.06238629847203, 37.00487430670437],
+           [42.06077697306309, 37.003914698073075],
+           [42.0595538857523, 37.00382901814195],
+           [42.05886724024449, 37.00358911382109],
+           [42.058202052408795, 37.00374333811426],
+           [42.05766561060582, 37.00348629745184],
+           [42.056957507425885, 37.00353770565385]]],
+         [[[42.06532599955235, 37.00329780041373],
+           [42.06639888315831, 37.00331493652742],
+           [42.066935324961285, 37.00314357521675],
+           [42.06781508951817, 37.00343488921508],
+           [42.06749322443638, 37.003760474127525],
+           [42.066720748240094, 37.00367479402259],
+           [42.065476203257184, 37.00367479402259]]]]),
+    urban = /* color: #bf04c2 */ee.Geometry.MultiPolygon(
+        [[[[42.06154944925938, 37.000590245934866],
+           [42.06335189371739, 36.9976083971626],
+           [42.06708552866612, 36.99880800555517],
+           [42.06798675089512, 36.99987050004109],
+           [42.0706475022379, 37.000624519378896],
+           [42.06961753397618, 37.00268089774861],
+           [42.06704261332188, 37.0017555343651],
+           [42.066227221781354, 37.00268089774861],
+           [42.0645964387003, 37.00230389921121],
+           [42.0640385392252, 37.0028865325265],
+           [42.06215026407872, 37.00226962652419],
+           [42.062708163553815, 37.00113861918561]]],
+         [[[42.079218170334045, 37.00696156529017],
+           [42.0828659745943, 37.005110931468685],
+           [42.088702461410705, 37.0107312355615],
+           [42.08290888993854, 37.01480912287062],
+           [42.081492683578674, 37.012581732550174],
+           [42.08080603807086, 37.01086831095765],
+           [42.079733154464904, 37.009017772250836]]],
+         [[[42.071578862464634, 36.95765597683384],
+           [42.07565582016727, 36.95645571952207],
+           [42.078316571510044, 36.95580414334499],
+           [42.08209312180301, 36.95621566578964],
+           [42.08423888901493, 36.960776557309515],
+           [42.079518201148716, 36.9620453281859],
+           [42.07582748154422, 36.961256635262664],
+           [42.073810460365024, 36.9606736830686],
+           [42.0729950688245, 36.95902767631145],
+           [42.0718792698743, 36.95830753716659]]]]),
+    agriculture = /* color: #ff0000 */ee.Geometry.MultiPolygon(
+        [[[[42.042043940831576, 37.01780711206839],
+           [42.04238726358548, 37.01177611143123],
+           [42.054832713414584, 37.010953665169644],
+           [42.05886675577298, 37.018081237088346],
+           [42.05122782449857, 37.021302131993984]]],
+         [[[41.76880669179153, 36.90027684485292],
+           [41.76606010976028, 36.88242907699862],
+           [41.774986501361845, 36.881055998940184],
+           [41.78185295643997, 36.900825940763724]]],
+         [[[41.45936145677381, 36.82749838359719],
+           [41.44425525560194, 36.819528462183875],
+           [41.44786014451795, 36.81513090885213],
+           [41.46468295945936, 36.823650938963965]]]]),
+    AOI = /* color: #00ff00 */ee.Geometry.Polygon(
+        [[[41.29238815745107, 37.09728245970528],
+          [41.18801804026357, 36.80096020448545],
+          [41.53958054026357, 36.69972805745089],
+          [42.00375290354482, 36.67109477230367],
+          [42.41024704416982, 37.051263621265704],
+          [42.25643845041982, 37.092900916492304],
+          [42.17129440745107, 37.0775635201205],
+          [41.92410202463857, 37.180483628078896]]]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
 //Source: https://bellingcat.github.io/RS4OSINT/C2_Refineries.html
 
 //Machine Learning Workflow
 //1. Pre-processing
+
 
 //Select date range from 2020 to 2021
 var start='2020-04-01'
@@ -15,6 +115,14 @@ var sentinel = ee.ImageCollection('COPERNICUS/S2_SR')
                   .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10))
                   .mean()
                   .select(bands)
+
+
+var s_rgb = {
+  min: 0.0,
+  max: 3000,
+  bands:['B4', 'B3', 'B2'],
+  opacity:1
+};
                   
 //NDVI
 var ndvi=sentinel.normalizedDifference(['B8','B4'])
@@ -23,3 +131,67 @@ var ndvi=sentinel.normalizedDifference(['B8','B4'])
 //NDWI
 var ndwi=sentinel.normalizedDifference(['B3','B8'])
                   .select(['nd'],['ndwi'])
+//normalizedDifference specify which band to use for each index
+//rename band from 'nd' to the spectral index band
+
+//use indices to filter out water and vegetation using the updateMask function
+//remove NDVI>0.2 and NDWI>0.3
+var image=sentinel.updateMask(ndwi.lt(0.3))
+                  .updateMask(ndvi.lt(0.2))
+                  .addBands(ndvi)
+                  .select(bands)
+                  
+//Add layer to the map
+Map.addLayer(image.clip(AOI), s_rgb, 'Sentinel');
+
+//2. Generating labelled data
+//take a random sample of points from each polygon
+var oil_points=ee.FeatureCollection.randomPoints(oil, 3000).map(function(i){
+  return i.set({'class': 0})})
+  
+var urban_points=ee.FeatureCollection.randomPoints(urban, 1000).map(function(i){
+  return i.set({'class': 1})})
+  
+var agriculture_points=ee.FeatureCollection.randomPoints(agriculture, 2000).map(function(i){
+  return i.set({'class': 2})})
+
+//create a sample of all the types of points
+var sample=ee.FeatureCollection([oil_points,
+                                  urban_points,
+                                  agriculture_points
+                                  ])
+                                  .flatten()
+                                  .randomColumn();
+                                  
+//create training and testing dataset
+var split=0.7
+var training_sample = sample.filter(ee.Filter.lt('random', split));
+var validation_sample = sample.filter(ee.Filter.gte('random', split));
+
+//3. Training a model
+//sampleRegions function to assign the band values from an image as properties to the feature collection
+var training = image.sampleRegions({
+  collection: training_sample,
+  properties: ['class'],
+  scale: 10,
+});
+
+var validation = image.sampleRegions({
+  collection: validation_sample,
+  properties: ['class'],
+  scale: 10
+});
+
+//Use Random Forect Classifier with 500 trees
+//More trees provide higher accuracy but result in more computation time
+var model = ee.Classifier.smileRandomForest(400)
+.train(training, 'class');
+
+////Predict class of new pixels
+var prediction = image.classify(model)
+
+//isolate out only class 0:oil
+var oil_prediction=prediction.updateMask(prediction.eq(0))
+
+
+Map.addLayer(oil_prediction, {palette:'red'}, 'Predicted Oil Contamination')

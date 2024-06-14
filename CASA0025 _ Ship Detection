@@ -1,0 +1,254 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var geometry = 
+    /* color: #000000 */
+    /* shown: false */
+    ee.Geometry.Polygon(
+        [[[32.17388584692775, 31.59541178442045],
+          [32.17388584692775, 31.327159861902278],
+          [32.4787564523965, 31.327159861902278],
+          [32.4787564523965, 31.59541178442045]]]);
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//Source: https://bellingcat.github.io/RS4OSINT/C4_Ships.html
+
+//1. Setup
+//Center the map on the Suez Canal and set map options
+Map.setCenter(32.327, 31.4532, 10);
+Map.setOptions("Hybrid");
+Map.setControlVisibility({ all: false });
+
+//Import the Digital Surface Model (DSM) from the ALOS World 3D-30 dataset
+var dem = ee.ImageCollection("JAXA/ALOS/AW3D30/V3_2").mean().select("DSM");
+
+//Import the Sentinel 1 dataset using the VV and IW mode
+var s1 = ee
+  .ImageCollection("COPERNICUS/S1_GRD")
+  .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VV"))
+  .filter(ee.Filter.eq("instrumentMode", "IW"))
+  .sort("system:time_start");
+
+// Define the default area of interest
+var suez = ee.Geometry.Polygon([
+  [
+    [32.17388584692775, 31.59541178442045],
+    [32.17388584692775, 31.327159861902278],
+    [32.4787564523965, 31.327159861902278],
+    [32.4787564523965, 31.59541178442045],
+  ],
+]);
+
+//2. Ship detection
+//If return signal>0 = ship; if return signal<0=no ship
+//getVectors function takes an image as an input and returns a FeatureCollection of points
+//each corresponding to a ship. The function clips the image to the area of interest
+//selects the VV polarization, and finally filters out areas where the VV value is smaller than 0.
+//This results in a raster image where the sea is black and the ships are white. 
+function getVectors(img) {
+  //get the area of interest from the drawing tools widget.  
+  var aoi = drawingTools.layers().get(0).getEeObject();
+
+  //clip the image to the area of interest
+  //select the VV polarization 
+  // filter areas where the VV value is greater than 0
+  var cutoff = img.clip(aoi).select("VV").gt(0)
+  //convert the raster image to a FeatureCollection of points
+  var points = cutoff.reduceToVectors({
+    geometry: aoi,
+    scale: scaleSlider.getValue(),
+    geometryType: "centroid",
+    eightConnected: true,
+    maxPixels: 1653602926,
+  });
+  //set the number of ships detected in the image as a property called "count"
+  var count = points.size();
+  //set the date of the image as a property called "system:time_start"
+  var date = ee.Date(img.get("system:time_start"));
+  return points.set("count", count).set("system:time_start", date);
+}
+//The count and system:time_start properties are used to create the graph of daily ship counts and allow
+//the resulting vector (point) data to interact with the date slider widget
+//The “scale” parameter of the reduceToVectors function is set to the value of the scale slider widget. 
+
+//3. Visualisation
+//viz function displays the results of the ship detection process and takes AOI, the vector data, and the Sentinel 1 image as inputs.
+//Stacking three layers and adding them to the map in order: the underlying Sentinel-1 image raster,
+//the ship vector data in green, and the area of interest outline in red
+//Map.layers().set() function to replace the existing layers with the new ones, rather than adding new ones each time.
+function viz(aoi, vectors, s1Filtered) {
+  //create an empty image into which to paint the features, cast to byte.
+  var empty = ee.Image().byte();
+  //paint all the polygon edges with the same number and width, display.
+  var outline = empty.paint({
+    featureCollection: aoi,
+    color: 1,
+    width: 3,
+  });
+  //create a layer for the area of interest in red
+  var aoi_layer = ui.Map.Layer(outline, { palette: "red" }, "AOI");
+  //create a layer for the vector data in green
+  var vectorLayer = ui.Map.Layer(
+    vectors.flatten(),
+    { color: "#39ff14" },
+    "Vectors"
+  );
+  //create a layer for the Sentinel 1 image in false color
+  var sarLayer = ui.Map.Layer(
+    s1Filtered,
+    { min: [-25, -20, -25], max: [0, 10, 0], opacity: 0.8 },
+    "SAR"
+  );
+  //add the layers in order
+  Map.layers().set(0, sarLayer);
+  Map.layers().set(1, vectorLayer);
+  Map.layers().set(2, aoi_layer);
+}
+
+//4. Compilation
+//takes Sentinel images from the date range and apply the getVectors function
+var daterangeVectors = function () {
+  //get the date range from the date slider widget.
+  var range = ee.DateRange(
+    ee.Date(dateSlider.getValue()[0]),
+    ee.Date(dateSlider.getValue()[1])
+  );
+  //get the area of interest from the drawing tools widget.
+  var aoi = drawingTools.layers().get(0).getEeObject();
+  //hide the user-drawn shape.
+  drawingTools.layers().get(0).setShown(false);
+  //filter the Sentinel 1 dataset to only include images within the date range, and within the area of interest.
+  var s1Filtered = s1.filterDate(range.start(), range.end()).filterBounds(aoi);
+  //count the number of ships in each image using the getVectors function
+  var vectors = s1Filtered.map(getVectors);
+  //use the viz function to visualize the results 
+  viz(aoi, vectors, s1Filtered.max().updateMask(dem.lte(0)));
+  //create a chart of the number of ships per day
+  var chart = ui.Chart.feature
+    .byFeature({
+      features: vectors,
+      xProperty: "system:time_start",
+      yProperties: ["count"],
+    })
+    .setOptions({
+      title: "Daily Number of Ships in Area of Interest",
+      vAxis: { title: "Ship Count" },
+      explorer: { axis: "horizontal" },
+      lineWidth: 2,
+      series: "Area of Interest",
+    });
+  //add the chart at a fixed position, so that new charts overwrite older ones.
+  controlPanel.widgets().set(4, chart);
+  // add a click handler to the chart to filter the map by day.
+  chart.onClick(filterDay);
+};
+
+//display the results for a certain day
+function filterDay (callback) {
+    //get the date of the clicked day
+    var date = ee.Date(callback);
+    //filter the vector data to only include images from that day
+    var vectorDay = vectors.filterDate(date);
+    //filter the Sentinel-1 imagery to only include images from that day
+    var s1Day = s1.filterDate(date).max().updateMask(dem.lte(0));
+    //use the viz function to visualize the results
+    viz(aoi, vectorDay, s1Day);
+}
+
+//5. Drawing tools
+var drawingTools = Map.drawingTools();
+
+//remove any existing layers
+while (drawingTools.layers().length() > 0) {
+  var layer = drawingTools.layers().get(0);
+  drawingTools.layers().remove(layer);
+}
+
+//add a dummy layer to the drawing tools object (the Suez Canal box)
+var dummyGeometry = ui.Map.GeometryLayer({
+  geometries: null,
+})
+  .fromGeometry(suez)
+  .setShown(false);
+
+//add the dummy layer to the drawing tools object
+drawingTools.layers().add(dummyGeometry);
+
+//create a function that clears existing geometries and lets the user draw a rectangle
+function drawPolygon() {
+  var layers = drawingTools.layers();
+  layers.get(0).geometries().remove(layers.get(0).geometries().get(0));
+  drawingTools.setShape("rectangle");
+  drawingTools.draw();
+}
+
+//6. Widgets
+// Create a button that allows the user to draw a polygon on the map
+var drawButton = ui.Button({
+  label: "🔺" + " Draw a Polygon",
+  onClick: drawPolygon,
+  style: { stretch: "horizontal" },
+});
+
+// Create a slider that allows the user to adjust the size of the ships that are detected
+var scaleSlider = ui.Slider({
+  min: 1,
+  max: 100,
+  value: 80,
+  step: 1,
+  onChange: daterangeVectors,
+  style: { width: "70%" },
+});
+
+// Create a label for the slider
+var scaleLabel = ui.Label("Ship Size: ");
+
+// Create a panel that contains the slider and its label
+var scalePanel = ui.Panel({
+  widgets: [scaleLabel, scaleSlider],
+  style: { stretch: "horizontal" },
+  layout: ui.Panel.Layout.Flow("horizontal"),
+});
+
+// Specify the start and end dates for the date slider
+var start = "2014-01-01";
+var now = Date.now();
+
+// Create a date slider that allows the user to select a year
+var dateSlider = ui.DateSlider({
+  value: "2021-03-01",
+  start: start,
+  end: now,
+  period: 365,
+  onChange: daterangeVectors,
+  style: { width: "95%" },
+});
+
+//7. Control panel to store widgets
+var controlPanel = ui.Panel({
+  widgets: [
+    ui.Label("SAR Ship Detection", {
+      fontWeight: "bold",
+      fontSize: "20px",
+    }),
+    ui.Label(
+      "This tool identifies ships using Synthetic Aperture Radar imagery. Use the date slider below to analyze a given year. Click on the graph to show ships on a given day.",
+      { whiteSpace: "wrap" }
+    ),
+    dateSlider,
+    ui.Label(),
+    scalePanel,
+    ui.Label(
+      "Click the button below and draw a rectangle on the map to count ships in a custom area."
+    ),
+    drawButton
+  ],
+  style: {maxWidth: "400px"},
+  layout: ui.Panel.Layout.flow("vertical", true),
+});
+
+// Add the control panel to the map
+ui.root.insert(0,controlPanel);
+
+// Trigger the daterangeVectors function when the user draws a polygon
+drawingTools.onDraw(ui.util.debounce(daterangeVectors, 500));
+
+// Run the daterangeVectors function to initialize the map
+daterangeVectors();
